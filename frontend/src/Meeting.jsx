@@ -6,11 +6,10 @@ import { useParams } from "react-router-dom";
 const Meeting = () => {
   const myVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-
   const [Mystream, setMystream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
   const [remoteSocketId, setRemoteSocketId] = useState(null);
-
+  const [remoteusername,setremoteusername] = useState(null)
   const [isNegotiating, setIsNegotiating] = useState(false);
 
   const { user, createOffer, createAnswer, setAnswer, peer } = store();
@@ -44,7 +43,10 @@ const Meeting = () => {
     peer.addEventListener("signalingstatechange", handleStateChange);
     return () => peer.removeEventListener("signalingstatechange", handleStateChange);
   }, [peer]);
-
+  const handleuserjoined = useCallback((data)=>{
+     setRemoteSocketId(data.Id)
+     setremoteusername(data.name)
+  },[])
   const handleNegotiationNeeded = useCallback(async () => {
     if (peer.signalingState !== "stable" || isNegotiating) {
       return;
@@ -80,14 +82,15 @@ const Meeting = () => {
     socket.emit("outgoingCall", { To: remoteSocketId, offer });
   }, [remoteSocketId, createOffer]);
 
-  const handleIncomingCall = useCallback(async ({ from, offer }) => {
+  const handleIncomingCall = useCallback(async ({ from, offer,name }) => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
 
     stream.getTracks().forEach(track => peer.addTrack(track, stream));
 
     setMystream(stream);
     setRemoteSocketId(from);
-
+    console.log(name)
+    setremoteusername(name)
     const answer = await createAnswer(offer);
     socket.emit("answere", { To: from, ans: answer });
   }, [createAnswer]);
@@ -106,7 +109,7 @@ const Meeting = () => {
   }, [setAnswer]);
 
   useEffect(() => {
-    socket.on("user-joined", (data) => setRemoteSocketId(data.Id));
+    socket.on("user-joined", handleuserjoined);
     socket.on("incoming-call", handleIncomingCall);
     socket.on("call-accepted", handleCallAccepted);
     socket.on("negoInco", handleNegoIncoming);
@@ -157,7 +160,7 @@ const Meeting = () => {
 
         {remoteStream && (
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4 text-blue-400">REMOTE USER</h2>
+            <h2 className="text-2xl font-bold mb-4 text-blue-400">{remoteusername || "REMOTE USER"}</h2>
             <video
               ref={remoteVideoRef}
               autoPlay

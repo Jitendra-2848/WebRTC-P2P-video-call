@@ -4,12 +4,13 @@ import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [room, setroom] = useState("");
   const navigate = useNavigate();
 const {onjoin} = store()
   const handleSubmit = (e) => {
     e.preventDefault();
-    onjoin({ email,room });
+    onjoin({ email,room,name });
     navigate(`/room/${room}`)
   };
 
@@ -23,6 +24,14 @@ const {onjoin} = store()
 
         <input
           type="text"
+          placeholder="Enter name"
+          value={name}
+          required
+          onChange={(e) => setName(e.target.value)}
+          className="bg-gray-300 px-2 w-8/12 py-2 rounded-md"
+        />
+        <input
+          type="email"
           placeholder="Enter Email"
           value={email}
           required
